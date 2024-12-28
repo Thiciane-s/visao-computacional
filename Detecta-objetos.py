@@ -4,6 +4,7 @@ import cv2
 import math 
 from pyfirmata import Arduino
 import time
+from datetime import datetime
 
 # Definindo a porta do arduino
 port = 'COM5'
@@ -24,6 +25,14 @@ cap.set(4, 480)
 
 # modelo
 model = YOLO("yolo-Weights/yolov8n.pt")
+
+# Arquivo para registrar logs
+log_file = "event_log.csv"
+
+# Criar o cabeçalho do arquivo de log (se não existir)
+with open(log_file, 'a') as file:
+    file.write("Data/Hora,Classe,Confiança\n")
+
 
 # object classes
 classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "train", "truck", "boat",
@@ -71,6 +80,8 @@ while True:
             thickness = 2
 
             cv2.putText(img, classNames[cls], org, font, fontScale, color, thickness)
+
+
             # Sinaliza a presença de determinados objetos e acende os leds correspondentes
             if (classNames[cls] == "person"  ):
                 board.digital[redLed].write(1)
@@ -82,6 +93,12 @@ while True:
             board.digital[yeLed].write(0)
             board.digital[redLed].write(0)
             board.digital[greenLed].write(0)
+
+             # Registrar o evento no arquivo de log
+            with open(log_file, 'a') as file:
+                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                file.write(f"{timestamp},{classNames[cls]},{confidence}\n")
+
     # Desliga a webcam ao pressionar a tecla q
     cv2.imshow('Webcam', img)
     if cv2.waitKey(1) == ord('q'):
